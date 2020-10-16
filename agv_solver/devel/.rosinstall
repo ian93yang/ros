@@ -1,0 +1,2 @@
+- setup-file:
+    local-name: /home/ysy/yang/catkin_ws/src/agv_solver/devel/setup.sh

@@ -1,0 +1,9 @@
+#include "agv_solver/auto_odometry.h"
+#include <string>
+
+//using namespace
+
+class Odometry_Adjust
+{
+  
+}

@@ -1,0 +1,4 @@
+<launch>
+    <node name="agv_solver" pkg="agv_solver" type="solver" respawn="true" output="screen">
+    <rosparam command="load" file="$(find agv_solver)/Offset_param.yaml" />
+    </launch>

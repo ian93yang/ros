@@ -1,0 +1,15 @@
+#parameter_name: value
+model_cofig: 1
+
+#one-diff model
+OneDiff_Diameter: 200
+OneDiff_Base: 600
+
+#params for other model
+Orientation: 2
+Longitudinal: 1380
+Lateral: 262.93
+CarDis: 2000
+
+#use Imu or not
+Imu: 0

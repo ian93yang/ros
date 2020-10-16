@@ -1,0 +1,90 @@
+#include "agv_solver/solver.h"
+#include "agv_solver/LocalizationResult.h"//A发出实时坐标
+#include "tf/transform_datatypes.h"
+#include "tf/LinearMath/Matrix3x3.h"
+#include "geometry_msgs/Quaternion.h"
+#include "agv_solver/auto_odometry.h"
+#include <string>
+using namespace std;
+double SubscribeAngPublish::angle_velocity =0.0;
+
+SubscribeAngPublish::SubscribeAngPublish()
+{
+  pub_ = nh.advertise<agv_solver::Model_to_Base>("Model_to_Base", 1);
+
+  //sub5 = nh.subscribe("LocalizationResult", 1000, &SubscriberAndPiblish::chatterCallback5, this);
+  sub_base = nh.subscribe("Base_to_Model", 1, &SubscribeAngPublish::callback1, this);
+  sub_imu = nh.subscribe("IMU_data", 1, &SubscribeAngPublish::callback2, this);
+  car_model = new BaseSolver();
+  auto_odom= new Odometry_Adjust();
+}
+
+SubscribeAngPublish::~SubscribeAngPublish()
+{
+  delete car_model;
+  delete auto_odom;
+}
+
+void SubscribeAngPublish::callback1(const agv_solver::Base_to_Model::ConstPtr &base_to_model)
+{
+  if (base_to_model->vw_exp.Mode == 1)//假设是自动，需讨论
+  {
+    car_model->DataProc(*base_to_model);
+    SetPubMsg(car_model->model_to_base);
+    ROS_INFO("++++++++++++++++++++++++++++");
+    ROS_INFO("++++++++++++++++++++++++++++");
+    ROS_INFO("++++++++++++++++++++++++++++");
+    ROS_INFO("Solver node is running!!!");
+    ROS_INFO("Vx_expect = %f", base_to_model->vw_exp.Vx);
+    ROS_INFO("Vy_expect = %f", base_to_model->vw_exp.Vy);
+    ROS_INFO("W_expect = %f", base_to_model->vw_exp.W);
+
+    pub_.publish(output);
+  }
+  else if (base_to_model->vw_exp.Mode == 2)
+  {
+    //agv_solver::Base_to_Model base_msg = *base_to_model;
+    auto_odom->Auto_Odom_FbackV(*base_to_model);//传入订阅的消息
+    auto_odom->DriveVelocityRatio();
+    auto_odom->FeedbackOffset();
+    
+    car_model->DriveRatio->LDNeg = auto_odom->DriveRatio.LDNeg;
+    //car_model->FbRatio = auto_odom->FbRatio;
+  }
+  
+  
+}
+
+void SubscribeAngPublish::callback2(const ImuConstPtr &imu_msg)
+{
+  angle_velocity = imu_msg->angular_velocity.z;
+  car_model->angle_velocity = angle_velocity;
+}
+
+void SubscribeAngPublish::SetPubMsg(agv_solver::Model_to_Base &model_to_base)
+{
+  output = model_to_base;
+}
+
+void SubscribeAngPublish::chatterCallback5(agv_solver::LocalizationResult::ConstPtr& msg)//控制计算功能
+{
+  //AfxGetApp->m_BezierData->Location.x=1000.0*msg->pose_with_covariance.pose.position.x;
+  //AfxGetApp->m_BezierData->Location.y=1000.0*msg->pose_with_covariance.pose.position.y;
+  tf::Quaternion quat;
+  double roll, pitch, yaw;
+  tf::quaternionMsgToTF(msg->pose_with_covariance.pose.orientation, quat);
+  tf::Matrix3x3(quat).getRPY(roll, pitch, yaw);
+  auto_odom->Auto_Odom_Proc(yaw);
+}
+
+int main(int argc,char ** argv)
+{
+  ROS_INFO("agv_solver start!");
+  ros::init(argc, argv, "solver");
+  
+  SubscribeAngPublish sub_pub;
+  //double dia = getParam<double>("OneDiff_Diameter",0.0);
+  //ROS_INFO("OneDiff_Diameter = %f",dia);
+  ros::spin();
+  return 0;
+}

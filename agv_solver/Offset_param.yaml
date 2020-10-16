@@ -1,0 +1,11 @@
+DriveOffset:
+  DriveOffsetLeftPos: 0.00
+  DriveOffsetRightPos: 0.00
+  DriveOffsetLeftNeg: 0.00
+  DriveOffsetRightNeg: 0.00
+
+FeedbackOffset:
+  FeedbackOffsetLeftPos: 0.00
+  FeedbackOffsetRightPos: 0.00
+  FeedbackOffsetLeftNeg: 0.00
+  FeedbackOffsetRightNeg: 0.00
